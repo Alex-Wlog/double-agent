@@ -84,6 +84,42 @@ slots = ["2020年净利润"]
 S_tbl = compute_table_semantic_scores(slots, tables, LM=DummyEmbedder())
 ```
 
+### Loading schemas from arbitrary databases
+
+Different databases expose schema metadata in different shapes (information_schema
+tables, JDBC metadata, SQLAlchemy inspector, custom JSON). Normalize them into
+the repo's ``Table``/``Column`` dataclasses using ``load_schema_from_dicts``:
+
+```python
+from table_semantic_scoring import load_schema_from_dicts, compute_table_semantic_scores
+
+raw_schema = [
+    {
+        "name": "accounts",
+        "comment": "账户表",  # optional
+        "category": "core",   # optional domain tag
+        "columns": [
+            {"name": "account_id", "dtype": "int", "is_primary_key": True},
+            {"name": "customer_id", "dtype": "int", "is_foreign_key": True},
+            {"name": "opened_at", "dtype": "datetime"},
+        ],
+    },
+    {
+        "name": "transactions",
+        "columns": [
+            {"name": "tx_id", "dtype": "int", "is_primary_key": True},
+            {"name": "account_id", "dtype": "int", "is_foreign_key": True},
+            {"name": "amount", "dtype": "decimal"},
+            {"name": "tx_time", "dtype": "datetime"},
+        ],
+    },
+]
+
+tables = load_schema_from_dicts(raw_schema)
+slots = ["2023年账户交易金额"]
+S_tbl = compute_table_semantic_scores(slots, tables, LM=DummyEmbedder())
+```
+
 ## Notes
 - Install a tokenizer: `pip install jieba` or `pip install ltp` (choose one and
   set `tokenizer_engine` accordingly).

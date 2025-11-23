@@ -136,6 +136,7 @@ __all__ = [
     "build_table_description",
     "compute_table_semantic_scores",
     "cosine_similarity",
+    "load_schema_from_dicts",
     "load_spider_schema",
 ]
 
@@ -190,5 +191,77 @@ def load_spider_schema(tables_json_path: str, db_id: str) -> List[Table]:
             is_foreign_key=col_id in fk_columns,
         )
         tables[tbl_idx].columns.append(column)
+
+    return tables
+
+
+def load_schema_from_dicts(schema: Sequence[dict]) -> List[Table]:
+    """Normalize ad-hoc schema metadata into :class:`Table` objects.
+
+    Many databases expose schemas in different shapes (SQLAlchemy inspector,
+    JDBC metadata, custom JSON). This helper accepts a list of dictionaries
+    describing tables and columns and converts them into the unified ``Table``
+    / ``Column`` dataclasses used by the semantic scoring step.
+
+    Expected structure (keys are optional except ``name``):
+
+    .. code-block:: python
+
+        [
+            {
+                "name": "accounts",
+                "comment": "账户表",
+                "category": "core",
+                "columns": [
+                    {
+                        "name": "account_id",
+                        "comment": "账户ID",
+                        "dtype": "int",
+                        "is_primary_key": True,
+                        "is_foreign_key": False,
+                    },
+                    ...
+                ],
+            },
+            ...
+        ]
+
+    Args:
+        schema: Iterable of dictionaries containing table and column metadata.
+
+    Returns:
+        List of :class:`Table` objects ready for ``compute_table_semantic_scores``.
+    """
+
+    tables: List[Table] = []
+    for tbl in schema:
+        tbl_name = tbl.get("name")
+        if not tbl_name:
+            raise ValueError("Each table dictionary must include a 'name' field")
+
+        columns_meta = tbl.get("columns", []) or []
+        columns: List[Column] = []
+        for col in columns_meta:
+            col_name = col.get("name")
+            if not col_name:
+                raise ValueError(f"Table {tbl_name!r} has a column without 'name'")
+            columns.append(
+                Column(
+                    name=col_name,
+                    comment=col.get("comment", col_name),
+                    dtype=col.get("dtype", ""),
+                    is_primary_key=bool(col.get("is_primary_key", False)),
+                    is_foreign_key=bool(col.get("is_foreign_key", False)),
+                )
+            )
+
+        tables.append(
+            Table(
+                name=tbl_name,
+                comment=tbl.get("comment", tbl_name),
+                category=tbl.get("category", ""),
+                columns=columns,
+            )
+        )
 
     return tables
