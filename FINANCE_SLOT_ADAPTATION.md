@@ -76,6 +76,6 @@
 ## 6. 代码示例：可复用的混合槽位抽取模块
 - `slot_extraction.py` 提供了可直接调用的工程代码：
   - `DictionarySlotExtractor`：基于 `jieba`/`LTP` + 词典的粗召回。
-  - `TongyiSlotLLMClient`：使用 DashScope OpenAI 兼容接口的兜底解析，prompt 已包含别名列表约束。
+  - `ZhiZengSlotLLMClient`：使用智增增 OpenAI 兼容接口的兜底解析，prompt 已包含别名列表约束，默认模型 `qwen3-max`。
   - `SlotExtractionPipeline`：先跑词典召回，空结果时走 LLM，输出统一 JSON 结构。
-- 使用方法参见 `README.md` 中的快速示例，配置 `DASHSCOPE_API_KEY` 和 `base_url` 即可调用通义点金。
+- 使用方法参见 `README.md` 中的快速示例，配置智增增的 `base_url=https://api.zhizengzeng.com/v1/` 与 API Key 即可调用。

@@ -4,7 +4,7 @@ Slot extraction pipeline for financial databases.
 Features:
 - Dictionary-based recall using jieba or LTP tokenization.
 - Canonical alias mapping for schema-aware normalization.
-- Optional Tongyi (DashScope) LLM fallback via OpenAI-compatible SDK.
+- Optional Zhizengzeng LLM fallback via OpenAI-compatible SDK.
 - Unified output structure with per-slot confidence and source.
 
 This module does not call remote services by default; provide a configured
@@ -109,16 +109,18 @@ class DictionarySlotExtractor:
         return slots
 
 
-class TongyiSlotLLMClient:
-    """LLM fallback using DashScope (Tongyi) via OpenAI-compatible SDK."""
+class ZhiZengSlotLLMClient:
+    """LLM fallback using Zhizengzeng (OpenAI-compatible) endpoint."""
 
     def __init__(
         self,
-        client,
-        model: str = "qwen-plus",
+        api_key: str,
+        base_url: str = "https://api.zhizengzeng.com/v1/",
+        model: str = "qwen3-max",
         base_confidence: float = 0.6,
     ):
-        self.client = client
+        openai_mod = _require_module("openai")
+        self.client = openai_mod.OpenAI(api_key=api_key, base_url=base_url)
         self.model = model
         self.base_confidence = base_confidence
 
@@ -178,7 +180,7 @@ class SlotExtractionPipeline:
         self,
         alias_entries: Iterable[AliasEntry],
         tokenizer_engine: str = "jieba",
-        llm_client: Optional[TongyiSlotLLMClient] = None,
+        llm_client: Optional[ZhiZengSlotLLMClient] = None,
         confidence_threshold: float = 0.3,
     ):
         self.alias_dict = AliasDictionary(alias_entries)
@@ -211,5 +213,5 @@ __all__ = [
     "DictionarySlotExtractor",
     "Slot",
     "SlotExtractionPipeline",
-    "TongyiSlotLLMClient",
+    "ZhiZengSlotLLMClient",
 ]

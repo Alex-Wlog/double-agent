@@ -1,8 +1,8 @@
 # double-agent
 
 Slot extraction sandbox for financial databases. This repo now includes a hybrid
-pipeline that combines dictionary recall (jieba/LTP) with an optional Tongyi
-(Qwen) fallback and unified JSON output.
+pipeline that combines dictionary recall (jieba/LTP) with an optional
+Zhizengzeng (Qwen) fallback and unified JSON output.
 
 We also provide a Step 2 implementation for table-level semantic scoring
 (`table_semantic_scoring.py`).
@@ -13,9 +13,8 @@ We also provide a Step 2 implementation for table-level semantic scoring
 from slot_extraction import (
     AliasEntry,
     SlotExtractionPipeline,
-    TongyiSlotLLMClient,
+    ZhiZengSlotLLMClient,
 )
-from openai import OpenAI
 
 # 1) Build alias dictionary (table/field/entity aliases -> canonical names)
 alias_entries = [
@@ -23,9 +22,12 @@ alias_entries = [
     AliasEntry(alias="基金代码", canonical="fund.basic.code", slot_type="column"),
 ]
 
-# 2) (Optional) Configure Tongyi LLM client for fallback
-# client = OpenAI(api_key="<DASHSCOPE_API_KEY>", base_url="https://dashscope.aliyuncs.com/compatible-mode/v1")
-# llm_client = TongyiSlotLLMClient(client)
+# 2) (Optional) Configure Zhizengzeng (OpenAI-compatible) LLM client for fallback
+# llm_client = ZhiZengSlotLLMClient(
+#     api_key="<YOUR_API_KEY>",
+#     base_url="https://api.zhizengzeng.com/v1/",
+#     model="qwen3-max",
+# )
 llm_client = None
 
 # 3) Run the pipeline
@@ -86,8 +88,8 @@ S_tbl = compute_table_semantic_scores(slots, tables, LM=DummyEmbedder())
 - Install a tokenizer: `pip install jieba` or `pip install ltp` (choose one and
   set `tokenizer_engine` accordingly).
 - To enable LLM fallback, install the OpenAI-compatible SDK (`pip install
-  openai`) and provide `DASHSCOPE_API_KEY` plus the DashScope base URL shown
-  above.
+  openai`) and set `base_url="https://api.zhizengzeng.com/v1/"` with a valid
+  API key (see the usage snippet above).
 - Output is always `{"slots": [...]}` with per-slot confidence, canonical name,
   and source (`jieba`/`ltp`/`llm`).
 
