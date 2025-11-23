@@ -7,6 +7,9 @@ Zhizengzeng (Qwen) fallback and unified JSON output.
 We also provide a Step 2 implementation for table-level semantic scoring
 (`table_semantic_scoring.py`).
 
+Step 3 (table-level structural priors) lives in `table_structural_priors.py` and
+can be combined with Step 2 scores for alignment.
+
 ## Usage
 
 ```python
@@ -72,6 +75,40 @@ tables = [
 slots = ["2023年净利润"]
 S_tbl = compute_table_semantic_scores(slots, tables, LM=DummyEmbedder())
 print(S_tbl)
+```
+
+## Step 3: Table-level structural priors (T_tbl)
+
+```python
+import numpy as np
+from table_semantic_scoring import Column, Table
+from table_structural_priors import (
+    SimpleSchemaGraph,
+    compute_table_structural_priors,
+)
+
+tables = [
+    Table(
+        name="finance_profit",
+        comment="利润表",
+        category="profit",
+        columns=[Column(name="company_id"), Column(name="net_income")],
+    ),
+    Table(
+        name="fund_position",
+        comment="基金持仓",
+        category="fund_position",
+        columns=[Column(name="fund_id"), Column(name="holding_ratio")],
+    ),
+]
+
+# Undirected table-level edges (e.g., foreign keys) by table name.
+edges = [("finance_profit", "fund_position")]
+graph = SimpleSchemaGraph(tables=tables, edges=edges)
+
+slots = ["2023年基金的重仓股净利润"]
+T_tbl = compute_table_structural_priors(slots, tables, graph)
+print(T_tbl)
 ```
 
 ### Loading a real schema from Spider tables.json
